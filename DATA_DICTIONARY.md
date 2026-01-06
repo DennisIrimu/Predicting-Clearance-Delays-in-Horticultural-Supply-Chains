@@ -1,6 +1,6 @@
-# Synthetic TLIP-like Dataset (Delay Prediction) — 5000 consignments (Realistic)
+# Synthetic Trade-like Dataset (Delay Prediction) — 5000 consignments (Realistic)
 
-This dataset is **synthetic** and TLIP-inspired: horticulture consignments + documents + event timelines.
+This dataset is **synthetic** and Trade-inspired: horticulture consignments + documents + event timelines.
 It contains **no live or proprietary records**.
 
 ## Class balance
@@ -15,3 +15,4 @@ It contains **no live or proprietary records**.
 ## Target definition
 - `delayed_flag` = 1 if `total_processing_hours` > (`sla_hours` + 28)
 - `delay_hours` = max(0, `total_processing_hours - (sla_hours + 28)`)
+

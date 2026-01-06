@@ -1,0 +1,194 @@
+Excellent move. This is exactly how you prevent silent misuse of features and accidental data leakage in a group project.
+
+Below is an expanded, production-grade data dictionary, now with:
+	1.	Example values per column
+	2.	A modeler cheat sheet
+	3.	Explicit feature-safety classification (pre- vs post-outcome)
+
+You can paste this straight into Word / Confluence / Notion.
+
+⸻
+
+Data Dictionary – Horticultural Clearance Delay Prediction
+
+Dataset Overview
+
+Each row represents one export consignment.
+The objective is to predict whether a consignment will be delayed beyond its SLA using only information available early in the process.
+
+⸻
+
+1. Consignment-Level Dataset (consignments_5000.csv)
+
+Identifiers & Metadata
+
+Column	Description	Example	Safe for Modeling
+consignment_id	Unique synthetic consignment identifier	TLIP-SYN-000421	❌ ID only
+created_at	Timestamp when consignment was created	2025-03-14T09:22:11	⚠️ (time features only)
+
+
+⸻
+
+Geography & Routing
+
+Column	Description	Example	Safe
+origin_country	Country of export	KE	✅
+destination_country	Country of import	NL	✅
+origin_port	Export port / airport	Nairobi-JKIA	✅
+destination_port	Import port / airport	Schiphol	✅
+shipment_mode	Mode of transport	AIR	✅
+
+
+⸻
+
+Commodity Information
+
+Column	Description	Example	Safe
+commodity	Product category	Cut Flowers	✅
+hs_code	Harmonized System code	0603	✅
+
+
+⸻
+
+Cargo & Value Attributes
+
+Column	Description	Example	Safe
+gross_weight_kg	Total shipment weight	18250.75	✅
+declared_value_usd	Declared shipment value	69423.50	✅
+
+
+⸻
+
+Exporter & Documentation Quality
+
+Column	Description	Example	Safe
+exporter_profile	Exporter size category	SME	✅
+doc_completeness_score	Documentation completeness (0–1)	0.91	✅
+missing_docs_proxy	Number of missing docs (proxy)	1	✅
+doc_amendments	Number of document amendments	2	✅
+
+
+⸻
+
+Operational Conditions
+
+Column	Description	Example	Safe
+congestion_index	Port congestion level (0–1)	0.63	✅
+is_weekend_created	Weekend indicator (1/0)	0	✅
+
+
+⸻
+
+⚠️ Process Timing (Post-Outcome Signals)
+
+These must NOT be used as input features for prediction models.
+They represent outcomes or near-outcomes.
+
+Column	Description	Example	Safe
+customs_release_hours	Time taken for customs clearance	31.4	❌
+terminal_dwell_hours	Time at terminal post-clearance	54.7	❌
+total_processing_hours	Total clearance duration	86.1	❌
+
+
+⸻
+
+Targets / Labels
+
+Column	Description	Example	Safe
+sla_hours	Expected clearance SLA	60	❌
+delayed_flag	Target variable (1 = delayed)	1	❌
+delay_hours	Hours beyond SLA buffer	14.2	❌
+
+
+⸻
+
+Reference Numbers
+
+Column	Description	Example	Safe
+bl_or_awb_no	Bill of Lading / Air Waybill	176-89374652	❌
+container_no	Container ID (SEA only)	MSKU8293412	❌
+
+
+⸻
+
+2. Document-Level Dataset (documents_5000.csv)
+
+Column	Description	Example	Safe
+consignment_id	Parent consignment	TLIP-SYN-000421	⚠️ Join key
+doc_type	Document type	commercial_invoice	⚠️
+doc_id	Document reference	INV-KE-482931	❌
+is_present	Document exists (1/0)	1	⚠️ (aggregated only)
+created_at	Document creation time	2025-03-14T10:01:02	❌
+amendments_count	Number of amendments	1	⚠️ (aggregated only)
+
+
+⸻
+
+3. Event-Level Dataset (events_5000.csv)
+
+Column	Description	Example	Safe
+consignment_id	Parent consignment	TLIP-SYN-000421	❌
+event	Process milestone	CUSTOMS_RELEASE	❌
+timestamp	Event time	2025-03-16T18:22:41	❌
+location	Event location	Mombasa	❌
+mode	Shipment mode	SEA	❌
+
+Event data is for analysis and storytelling, not predictive features.
+
+⸻
+
+MODELERS’ CHEAT SHEET
+
+✅ Safe Feature Groups (Use These)
+	•	Shipment mode
+	•	Commodity & HS code
+	•	Origin & destination
+	•	Exporter profile
+	•	Document completeness & amendment counts
+	•	Congestion index
+	•	Weekend indicator
+	•	Weight & declared value
+
+❌ Do NOT Use (Data Leakage)
+	•	Clearance time variables
+	•	Terminal dwell time
+	•	SLA, delay flags, delay hours
+	•	Event timestamps after clearance
+	•	Any post-customs information
+
+⸻
+
+🎯 Recommended Feature Set (Baseline)
+
+shipment_mode
+commodity
+hs_code
+origin_country
+destination_country
+exporter_profile
+doc_completeness_score
+missing_docs_proxy
+doc_amendments
+congestion_index
+is_weekend_created
+gross_weight_kg
+declared_value_usd
+
+
+⸻
+
+Key Modeling Guidance
+	•	Treat this as an early-warning prediction, not a forensic analysis.
+	•	Favor interpretability first, then performance.
+	•	If a feature wouldn’t be known before clearance, don’t use it.
+	•	When in doubt: ask whether the exporter would know this at submission time.
+
+⸻
+
+If you want next, I can:
+	•	Convert this into a Word-ready data dictionary
+	•	Add example SQL joins between tables
+	•	Create a one-page “DO / DON’T” slide for your team
+	•	Annotate features by business vs operational ownership
+
+This is the kind of rigor that quietly separates strong projects from average ones.
