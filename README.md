@@ -46,7 +46,6 @@ To develop a robust, accurate machine learning regression model that predicts to
 
 ### Project Scope
 
-* In-Scope:
   - Loading and basic exploration of the  dataset
   - Data structure & quality check (df.info(), df.describe())
   - Statistical summary of numerical features
@@ -54,8 +53,6 @@ To develop a robust, accurate machine learning regression model that predicts to
   - Automatic categorical & numerical preprocessing via Pipeline
   - Model evaluation via classification report and confusion matrix
   - Visualization of precision/recall/F1-score and confusion matrix heatmap
-
-* Out-of-Scope :
   - Feature engineering from nested columns (documents, events)
   - Regression modeling
   - Hyperparameter tuning or cross-validation
