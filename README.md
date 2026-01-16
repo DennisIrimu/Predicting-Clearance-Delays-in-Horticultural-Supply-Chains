@@ -28,12 +28,14 @@ To develop a robust, accurate machine learning regression model that predicts to
 
 ### Specific Objectives
 
-- Collect, clean, and deeply explore historical export logistics and external event data
-- Engineer high-impact features including risk scores, seasonal indicators, and lagged delay patterns
-- Build, train, and systematically compare multiple regression models (Linear Regression, KNN, XGBoost)
-- Evaluate models using business-critical metrics (MAE, RMSE, R²) and custom tolerance thresholds
-- Identify and rank the top drivers of export delays in the Kenyan horticulture supply chain
-- Deliver a deployable model prototype and actionable recommendations for exporters, freight forwarders, and policymakers
+-Load and inspect the 5,000-record consignment dataset  
+- Perform initial data exploration and quality checks  
+- Conduct descriptive analytics: overall delay rate, processing times, and key distributions  
+- Identify delay patterns by origin/destination, commodity, time/day, and ports  
+- Uncover early red-flag signals (document completeness, amendments, congestion)  
+- Build and evaluate a baseline Random Forest Classifier for delay prediction  
+- Visualize insights and model performance (classification report, confusion matrix)
+
 
 ### Stakeholders
 
