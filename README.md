@@ -28,7 +28,7 @@ To develop a robust, accurate machine learning regression model that predicts to
 
 ### Specific Objectives
 
--Load and inspect the 5,000-record consignment dataset  
+- Load and inspect the 5,000-record consignment dataset  
 - Perform initial data exploration and quality checks  
 - Conduct descriptive analytics: overall delay rate, processing times, and key distributions  
 - Identify delay patterns by origin/destination, commodity, time/day, and ports  
