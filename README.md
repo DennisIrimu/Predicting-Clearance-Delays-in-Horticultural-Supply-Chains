@@ -124,7 +124,7 @@ df.head(5)
   
 
 ###  5.0 Descriptive Analytics - Pre-Modeling Analysis
-
+Before modeling, an extensive descriptive analysis was conducted to understand the data landscape.
 Quick summary of delay patterns across 5,000 consignments before modeling.
 
 **5.1. Overall Delay Landscape**
@@ -186,6 +186,9 @@ Quick summary of delay patterns across 5,000 consignments before modeling.
 - doc_amendments: **+0.3012**  
 - congestion_index: **+0.3793** (highest among early flags)
 
+  <img width="715" height="546" alt="image" src="https://github.com/user-attachments/assets/e8b9b264-b293-4cbc-97ca-d7b0fb7d4cf5" />
+
+
 **5.6.6 Visual Highlights**
 - Pie chart: overall delay split (48.4% delayed)
 - Bar charts: delay rates by origin/destination, commodity, port, time bucket, day of week, document completeness, amendments, congestion, weight/value
@@ -199,6 +202,156 @@ Quick summary of delay patterns across 5,000 consignments before modeling.
 - **Weekend penalty**: nearly doubles delay risk  
 - **AIR vs SEA**: AIR shipments are far more reliable  
 - Nearly half of consignments delayed — balanced and realistic classification problem
+
+
+## 6.0 Data Preprocessing & Feature Engineering
+
+- Based on the exploratory findings, the following steps were applied in the notebook:
+- Removal of irrelevant identifiers (e.g., consignment IDs)
+- Handling missing values
+- One-hot encoding of categorical variables
+- Scaling of numerical features where appropriate
+- Pipeline-based preprocessing to ensure reproducibility
+
+
+## 7.0 Modeling Approach
+The following models were trained and evaluated to ensure objective comparison:
+
+**7.1. Logistic Regression (Baseline)**
+
+- Provides a simple, interpretable benchmark
+- Assumes linear relationships between predictors and target
+
+
+**7.2. Decision Tree Classifier**
+
+- Capture non-linear relationships
+- Improve interpretability through decision paths
+- Improved flexibility over Logistic Regression
+- Signs of overfitting observed, especially on training data
+
+**7.3. Random Forest Classifier**
+
+-Ensemble learning to reduce overfitting
+-Capture complex interactions across many features
+-Best overall balance between bias and variance
+-Stronger generalization compared to single-tree models
+-Suitable for SHAP-based interpretability
+
+<img width="706" height="424" alt="image" src="https://github.com/user-attachments/assets/35b4d2f2-1322-4e64-bbe5-8232ea22986e" />
+
+
+**7.4 Model Selected: Random Forest Classifier**
+Why Random Forest?
+Random Forest was chosen due to:
+- Its ability to handle non-linear relationships
+- Robustness to noisy and high-dimensional data
+- Strong performance on tabular logistics data
+- Reduced risk of overfitting compared to single decision trees
+- Random Forest also provides feature importance, supporting interpretability and business explainability.
+
+## 8.0 Hyperparameter Tuning
+
+ Hyperparameter tuning was performed to optimize performance.
+
+Tuned parameters included:
+
+- Number of trees (n_estimators)
+- Tree depth (max_depth)
+- Minimum samples per split and leaf(min_samples_split, min_samples_leaf)
+- Feature selection strategy (max_features)
+
+**8.1 Tuning balanced:**
+
+- Predictive performance
+- Generalization
+- Computational efficiency
+
+## 9.0 Model Evaluation.
+The model was evaluated using:
+
+- Accuracy
+- Precision
+- Recall
+- F1-Score
+- Confusion Matrix
+
+**9.1 Key observations:**
+
+- Random Forest shows better balance between precision and recall
+- Recall for delayed shipments improves compared to baseline models
+- F1-score confirms better handling of class imbalance
+
+**9.2 Interpretation:**
+
+- The tuned Random Forest model demonstrates strong recall, minimizing false negatives (missed delays), which is critical from a business perspective.
+
+**9.3 Confusion Matrix**
+
+- Fewer false negatives in the final model
+- Improved detection of delayed shipments
+- Acceptable trade-off in false positives
+
+<img width="424" height="280" alt="image" src="https://github.com/user-attachments/assets/f4b782a8-2d30-4ad7-83a1-876eef768467" />
+
+<img width="408" height="352" alt="image" src="https://github.com/user-attachments/assets/7d4e5b81-c95f-42c3-aafd-7c8598026633" />
+
+
+
+## 10.0 Model Interpretability Using SHAP
+** 10.1 Why SHAP?**
+
+SHAP (SHapley Additive exPlanations) was applied to:
+
+- Explain individual predictions
+- Quantify feature contributions
+- Improve model transparency and trust
+
+**10.2 SHAP Analysis Provided:**
+
+- Global feature importance: Identifies overall drivers of shipping delays
+- Local explanations: Explains why specific shipments were predicted as delayed
+- Directionality insights: Shows whether features increase or decrease delay probability
+
+**10.3 Business value:**
+
+- Enables shipment-level accountability and transparency
+- Supports auditability and operational trust
+
+<img width="569" height="676" alt="image" src="https://github.com/user-attachments/assets/b1bd80c2-b1e6-4b3b-ae67-fa3acff7a539" />
+
+
+## 11.0 Model Deployment
+
+- The final Random Forest model was deployed as a web-based application for real-time shipping delay prediction.
+Users input shipment details and receive immediate delay predictions using the same preprocessing pipeline applied during training, demonstrating a transition from model development to practical deployment.
+
+link: https://predictive-horticulture.streamlit.app/
+
+## 12.0 Key Insights 
+
+- Shipping delays are structurally driven, not random
+- Geographic and port-level factors dominate delay risk
+- Ensemble models outperform linear and single-tree approaches
+- SHAP provides transparent, defensible explanations for predictions
+
+## Tools & Technologies
+
+- Python
+- Pandas, NumPy
+- Scikit-learn
+- SHAP
+- Matplotlib / Seaborn
+- Jupyter Notebook
+
+## Group members
+- **David Munyiri* -Scrumaster
+- **Dennis Irimu*
+- **Lydiah Onkundi*
+- **Eugene Kiprop*
+- **James Ouma*
+- **Cindy Achieng*
+- **Barclay Koin*
 
 
 
