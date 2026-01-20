@@ -232,11 +232,11 @@ The following models were trained and evaluated to ensure objective comparison:
 
 **7.3. Random Forest Classifier**
 
--Ensemble learning to reduce overfitting
--Capture complex interactions across many features
--Best overall balance between bias and variance
--Stronger generalization compared to single-tree models
--Suitable for SHAP-based interpretability
+- Ensemble learning to reduce overfitting
+- Capture complex interactions across many features
+- Best overall balance between bias and variance
+- Stronger generalization compared to single-tree models
+- Suitable for SHAP-based interpretability
 
 <img width="706" height="424" alt="image" src="https://github.com/user-attachments/assets/35b4d2f2-1322-4e64-bbe5-8232ea22986e" />
 
