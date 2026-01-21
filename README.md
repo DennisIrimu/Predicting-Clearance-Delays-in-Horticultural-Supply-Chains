@@ -28,14 +28,13 @@ To develop a robust, accurate machine learning regression model that predicts to
 
 ### Specific Objectives
 
-- Load and inspect the 5,000-record consignment dataset  
-- Perform initial data exploration and quality checks  
-- Conduct descriptive analytics: overall delay rate, processing times, and key distributions  
-- Identify delay patterns by origin/destination, commodity, time/day, and ports  
-- Uncover early red-flag signals (document completeness, amendments, congestion)  
-- Build and evaluate a baseline Random Forest Classifier for delay prediction  
+-Load and inspect the 5,000-record consignment dataset
+- Perform initial data exploration and quality checks
+- Conduct descriptive analytics: overall delay rate, processing times, and key distributions
+- Identify delay patterns by origin/destination, commodity, time/day, and ports
+- Uncover early red-flag signals (document completeness, amendments, congestion)
+- Build and evaluate a baseline Random Forest Classifier for delay prediction
 - Visualize insights and model performance (classification report, confusion matrix)
-
 
 ### Stakeholders
 
@@ -46,38 +45,27 @@ To develop a robust, accurate machine learning regression model that predicts to
 
 ### Project Scope
 
-  - Loading and basic exploration of the  dataset
-  - Data structure & quality check (df.info(), df.describe())
-  - Statistical summary of numerical features
-  - Training a baseline Random Forest Classifier to predict delayed_flag
-  - Automatic categorical & numerical preprocessing via Pipeline
-  - Model evaluation via classification report and confusion matrix
-  - Visualization of precision/recall/F1-score and confusion matrix heatmap
-  - Feature engineering from nested columns (documents, events)
-  - Regression modeling
-  - Hyperparameter tuning or cross-validation
-  - Additional algorithms (XGBoost, etc.)
-  - Model deployment or dashboard
+- Load and inspect the 5,000-record consignment dataset
+- Perform exploratory data analysis (EDA) and quality checks
+- Conduct descriptive analytics (delay rate, processing times, key distributions)
+- Identify delay patterns by origin/destination, commodity, time/day, and ports
+- Detect early red-flag signals (document completeness, amendments, congestion)
+- Build and evaluate baseline models (Logistic Regression, Random Forest, Decision Tree, XGBoost, LightGBM)
+- Apply hyperparameter tuning and stratified cross-validation
+- Handle class imbalance using class weights
+- Compare models using classification metrics, confusion matrices, ROC curves
+- Perform model iteration (Ridge, Lasso, ElasticNet Logistic Regression)
+- Select features and re-evaluate models with reduced feature sets
+- Diagnose best model and interpret feature importance
+-Translate findings into operational insights for risk reduction
 
 ## 3.0 Data Understanding
 
-**3.1 Dataset Overview**
+### Dataset Overview
 
 The dataset consists of 5,000 synthetic but realistic international consignments, stored in JSON Lines format .  
 Each record represents a single shipment (mostly air freight of perishable goods such as fruits and cut flowers) and contains information about origin/destination, commodity, weight, document status, congestion, processing times, and whether the shipment was delayed beyond its SLA.
 
-File: tlip_like_consignments_5000.jsonl  
-Records: 5,000  
-Columns: 27  
-No missing values across the entire dataset
-
-**3.2 Loading the Data**
-
-The dataset is loaded into a pandas DataFrame using:
-
-
-df = pd.read_json("tlip_like_consignments_5000.jsonl", lines=True)
-df.head(5)
 
 **Primary anticipated sources include:**
 - KenTrade Single Window (TradeNet) — clearance times, permit records
@@ -86,7 +74,19 @@ df.head(5)
 - External event data — weather records, port/airport disruptions, freight cost trends
 
 
-### 3.3 Variable Description
+### Loading the Data
+
+The dataset is loaded into a pandas DataFrame using:
+
+df = pd.read_json("tlip_like_consignments_5000.jsonl", lines=True)
+df.head(5)
+
+File: tlip_like_consignments_5000.jsonl  
+Records: 5,000  
+Columns: 27  
+No missing values across the entire dataset
+
+### Variable Description
 
 | Column                     | Type          | Description                          |
 |----------------------------|---------------|--------------------------------------|
@@ -115,236 +115,215 @@ df.head(5)
 | documents                  | list of dicts | Documents info                       |
 | events                     | list of dicts | Events timeline                      |
 
-## 4.0 Data Cleaning & Pre-processing
+## 4.0 Exploratory Data Analysis (EDA)
 
-#### 4.1 Handling Missing Values
-- The notebook runs `df.info()`
-- Result: All 27 columns have 5000 non-null values → **no missing data**
-- No imputation, dropping, or filling of missing values is performed (none needed)
+### Objectives:
+- Explore distributions of key numeric features.
+- Identify factors contributing to shipment delays.
+- Validate assumptions before modeling.
+
   
+**Key Analysis:**
+- Numeric Features: Most shipments have high doc_completeness_score and low doc_amendments, while congestion_index shows variability.
+**Congestion vs Delay: Higher congestion is associated with delays.**
+  
+<img width="532" height="410" alt="image" src="https://github.com/user-attachments/assets/f8de8045-92cc-4232-9da9-89212bd2b191" />
 
-###  5.0 Descriptive Analytics - Pre-Modeling Analysis
-Before modeling, an extensive descriptive analysis was conducted to understand the data landscape.
-Quick summary of delay patterns across 5,000 consignments before modeling.
+**Overall Delay: ~35% of shipments were delayed, ~65% on time.**
 
-**5.1. Overall Delay Landscape**
-- Total: 5,000 consignments
-- Delayed: 2,419 (48.38%)
-- On time: 2,581 (51.62%)
-- Avg total processing: 98.6 hours
-- Avg delay (when delayed): 17.65 hours
-- Long tail: 5% exceed 155 hours, 1% exceed 173 hours
+<img width="683" height="497" alt="image" src="https://github.com/user-attachments/assets/6bf0eabe-b96a-4ede-96e1-1ec950901413" />
 
+**Shipment Mode vs Delay: Certain modes experience more delays; e.g., Air shipments delayed ~20%, Sea shipments delayed ~50%.**
+  
+<img width="679" height="215" alt="image" src="https://github.com/user-attachments/assets/686b113e-8fba-4d9b-862c-b4b6e557c845" />
 
-**5.2. Overall Delay Landscape**
-- Total consignments: **5,000**
-- Delayed: **2,419** (48.38%)
-- On time: **2,581** (51.62%)
-- Average total processing time: **98.6 hours** (median 96.8h)
-- Long tail: 5% exceed **155h**, 1% exceed **173h**, max **201h**
-- Average delay (when delayed): **17.65 hours** (P75: 25.55h, max 77h)
+## 5.0 Data Preparation
+Data preparation focused on organizing features, splitting the dataset, and applying preprocessing pipelines to ensure clean inputs for modeling while preventing data leakage.
 
-**5.3. Key Patterns by Origin, Destination, Ports & Time**
-- **Highest risk origins**: Rwanda (52%), Uganda (50%), Ethiopia (48%)
-- **Highest risk destinations**: Belgium & Germany (51%)
-- **Top ports**: Kigali (origin 52%), Felixstowe (destination 53%)
-- **Weekend creation penalty**: 69% delay rate (vs 40% weekdays)
-- **Night creation** (00:00–05:59): slightly higher risk (~50%)
+### Actions:
 
-**5.4 Commodity-Level Insights**
-- **Highest delay** (mostly SEA): Tea (60%), Vegetables Mix (54%), Pineapples (52%)
-- **Lowest delay** (all AIR): Fresh Beans (41%), Mangoes (43%), Cut Flowers/Herbs (~44%)
-- SEA shipments consistently 2–3× more delayed than AIR
+1. Feature Grouping:
+- Numeric Features: gross_weight_kg, declared_value_usd, doc_completeness_score, missing_docs_proxy, doc_amendments, congestion_index
+- Categorical Features: shipment_mode, commodity, hs_code, origin_country, destination_country, exporter_profile
+-Binary Features: is_weekend_created
 
+2.Target Variable: delayed_flag (0 = not delayed, 1 = delayed)
 
-### 5.6. Early Red-Flag Signals (Pre-Clearance Predictors)
+3.Train–Test Split:
+- 80% training, 20% testing
+-Stratified to preserve the proportion of delayed vs non-delayed shipments
 
-**5.6.1 Document Completeness Score**  
-- Very High (0.9–1.0): **38%** delay rate, 93.18h avg processing  
-- High (0.7–0.9): **63%** delay rate, 106.10h avg processing  
-→ Higher completeness → much lower risk (strong negative correlation)
-
-**5.6.2 Number of Document Amendments**  
-- 0 amendments: **37%** delay rate  
-- 1 amendment: **58%**  
-- 2 amendments: **78%**  
-- 3+ amendments: **93%** delay rate  
-→ Each amendment is a major red flag (positive correlation)
-
-**5.6.3 Congestion Index**  
-- Low (0–0.3): **26%** delay rate  
-- Medium (0.3–0.5): **46%**  
-- High (0.5–0.7): **65%**  
-- Very High (0.7–1.0): **78%** delay rate  
-→ Strongest single early predictor (positive correlation)
-
-**5.6.4 Weight & Value Quartiles**  
-- Heavier/higher-value shipments: slightly higher delay risk (49–51%)
-
-**5.6.5 Correlation Summary** (Early Flags vs Delay)  
-- doc_completeness_score: **−0.3361** (strong negative)  
-- doc_amendments: **+0.3012**  
-- congestion_index: **+0.3793** (highest among early flags)
-
-  <img width="715" height="546" alt="image" src="https://github.com/user-attachments/assets/e8b9b264-b293-4cbc-97ca-d7b0fb7d4cf5" />
+4.Preprocessing Pipeline:
+- Numeric: Standard scaled (StandardScaler)
+- Binary: Passed through unchanged
+- Categorical: One-hot encoded (OneHotEncoder) with handle_unknown='ignore' to accommodate unseen categories in the test set
 
 
-**5.6.6 Visual Highlights**
-- Pie chart: overall delay split (48.4% delayed)
-- Bar charts: delay rates by origin/destination, commodity, port, time bucket, day of week, document completeness, amendments, congestion, weight/value
-- Histograms & box plots: processing time & delay distributions
-- Scatter plots: customs vs dwell time (bottleneck detection), processing time vs delay rate by country
-- Trend line: document completeness vs delay (clear downward slope)
+## 6.0 Modeling 
+Several models were evaluated to predict shipment delays, chosen based on the data structure and feature types:
 
-**5.6.7 Final Key Takeaways for Modeling**
-- **Strongest early red flags**: high congestion, many document amendments, low document completeness  
-- **Highest risk profile**: Weekend-created SEA shipments of Tea/Vegetables/Pineapples from Rwanda to Belgium/Germany  
-- **Weekend penalty**: nearly doubles delay risk  
-- **AIR vs SEA**: AIR shipments are far more reliable  
-- Nearly half of consignments delayed — balanced and realistic classification problem
+- Logistic Regression
+- Decision Tree
+- Random Forest
+- XGBoost
+- LightGBM
 
+### Modeling Approach:
+- Hyperparameter tuning via GridSearchCV with stratified 5-fold cross-validation.
+- Class imbalance handled using class weights where applicable.
+- Preprocessing pipeline applied to prevent data leakage (numeric scaling, binary passthrough, categorical one-hot encoding).
+- Evaluation metrics included Accuracy, Precision, Recall, F1-score, and ROC-AUC.
 
-## 6.0 Data Preprocessing & Feature Engineering
+| Model               | Accuracy | Precision | Recall | F1    | ROC_AUC |
+| ------------------- | -------- | --------- | ------ | ----- | ------- |
+| Logistic Regression | 0.813    | 0.809     | 0.804  | 0.806 | 0.898   |
+| XGBoost             | 0.806    | 0.813     | 0.779  | 0.795 | 0.890   |
+| Random Forest       | 0.797    | 0.800     | 0.775  | 0.787 | 0.877   |
+| LightGBM            | 0.795    | 0.794     | 0.779  | 0.786 | 0.888   |
+| Decision Tree       | 0.777    | 0.810     | 0.705  | 0.754 | 0.853   |
 
-- Based on the exploratory findings, the following steps were applied in the notebook:
-- Removal of irrelevant identifiers (e.g., consignment IDs)
-- Handling missing values
-- One-hot encoding of categorical variables
-- Scaling of numerical features where appropriate
-- Pipeline-based preprocessing to ensure reproducibility
+Results:
+- Logistic Regression achieved the best overall balance (highest F1 and ROC-AUC).
+- Tree-based models (XGBoost, Random Forest, LightGBM) performed competitively, but slightly lower.
+- Decision Tree was weakest, showing lower recall and F1.
 
-
-## 7.0 Modeling Approach
-The following models were trained and evaluated to ensure objective comparison:
-
-**7.1. Logistic Regression (Baseline)**
-
-- Provides a simple, interpretable benchmark
-- Assumes linear relationships between predictors and target
-
-
-**7.2. Decision Tree Classifier**
-
-- Capture non-linear relationships
-- Improve interpretability through decision paths
-- Improved flexibility over Logistic Regression
-- Signs of overfitting observed, especially on training data
-
-**7.3. Random Forest Classifier**
-
-- Ensemble learning to reduce overfitting
-- Capture complex interactions across many features
-- Best overall balance between bias and variance
-- Stronger generalization compared to single-tree models
-- Suitable for SHAP-based interpretability
-
-<img width="706" height="424" alt="image" src="https://github.com/user-attachments/assets/35b4d2f2-1322-4e64-bbe5-8232ea22986e" />
-
-
-**7.4 Model Selected: Random Forest Classifier**
-Why Random Forest?
-Random Forest was chosen due to:
-- Its ability to handle non-linear relationships
-- Robustness to noisy and high-dimensional data
-- Strong performance on tabular logistics data
-- Reduced risk of overfitting compared to single decision trees
-- Random Forest also provides feature importance, supporting interpretability and business explainability.
-
-## 8.0 Hyperparameter Tuning
-
+## 7.0 Hyperparameter Tuning
  Hyperparameter tuning was performed to optimize performance.
 
 Tuned parameters included:
-
 - Number of trees (n_estimators)
 - Tree depth (max_depth)
 - Minimum samples per split and leaf(min_samples_split, min_samples_leaf)
 - Feature selection strategy (max_features)
 
-**8.1 Tuning balanced:**
-
+**Tuning balanced:**
 - Predictive performance
 - Generalization
 - Computational efficiency
 
-## 9.0 Model Evaluation.
-The model was evaluated using:
+## 8.0 Model Evaluation.
+Evaluation Focus:
+- Compare all models both numerically and visually.
+- Select the best-performing model based on classification metrics.
+- Examine error trade-offs using confusion matrices.
+- Assess discrimination ability via ROC curves.
+- Explain model predictions using feature importance.
 
-- Accuracy
-- Precision
-- Recall
-- F1-Score
-- Confusion Matrix
+  **ROC-AUC Performance:**
 
-**9.1 Key observations:**
+| Model               | ROC_AUC |
+| ------------------- | ------- |
+| Logistic Regression | 0.898   |
+| XGBoost             | 0.890   |
+| LightGBM            | 0.888   |
+| Random Forest       | 0.877   |
+| Decision Tree       | 0.853   |
+  
+<img width="691" height="351" alt="image" src="https://github.com/user-attachments/assets/c9c2d20a-edc4-406a-bf54-b656f8178f04" />          <img width="630" height="505" alt="image" src="https://github.com/user-attachments/assets/2674e795-1168-4605-b44c-ff3f12fd9b89" />
 
-- Random Forest shows better balance between precision and recall
-- Recall for delayed shipments improves compared to baseline models
-- F1-score confirms better handling of class imbalance
+## 9.0 Best Model Diagnostics.
 
-**9.2 Interpretation:**
+The model with the highest F1-score was chosen as the best, balancing precision and recall due to potential class imbalance.
 
-- The tuned Random Forest model demonstrates strong recall, minimizing false negatives (missed delays), which is critical from a business perspective.
+Logistic Regression achieved the best F1-score of 0.81.
 
-**9.3 Confusion Matrix**
+### Confusion Matrix:
+- A confusion matrix was generated to examine true positives, true negatives, false positives, and false negatives.
+- This highlights the error trade-offs and provides insight into which classes are more likely to be misclassified.
 
-- Fewer false negatives in the final model
-- Improved detection of delayed shipments
-- Acceptable trade-off in false positives
+<img width="492" height="405" alt="image" src="https://github.com/user-attachments/assets/eb81dbfc-33bc-42d3-a46f-3cfc96ba5993" />
 
-<img width="424" height="280" alt="image" src="https://github.com/user-attachments/assets/f4b782a8-2d30-4ad7-83a1-876eef768467" />
-
-<img width="408" height="352" alt="image" src="https://github.com/user-attachments/assets/7d4e5b81-c95f-42c3-aafd-7c8598026633" />
-
-
-
-## 10.0 Model Interpretability Using SHAP
-** 10.1 Why SHAP?**
-
-SHAP (SHapley Additive exPlanations) was applied to:
-
-- Explain individual predictions
-- Quantify feature contributions
-- Improve model transparency and trust
-
-**10.2 SHAP Analysis Provided:**
-
-- Global feature importance: Identifies overall drivers of shipping delays
-- Local explanations: Explains why specific shipments were predicted as delayed
-- Directionality insights: Shows whether features increase or decrease delay probability
-
-**10.3 Business value:**
-
-- Enables shipment-level accountability and transparency
-- Supports auditability and operational trust
-
-<img width="569" height="676" alt="image" src="https://github.com/user-attachments/assets/b1bd80c2-b1e6-4b3b-ae67-fa3acff7a539" />
+### Feature Importance / Coefficients:
+- For Logistic Regression, the absolute values of coefficients were used to rank feature importance.
+- The top 15 features influencing predictions were plotted, showing which shipment attributes most strongly affect the likelihood of delay.
+- This helps explain model behavior and informs potential operational interventions.
+  
+<img width="652" height="392" alt="image" src="https://github.com/user-attachments/assets/c8883cbc-4960-4421-bfda-6ab42c3e4162" />
 
 
-## 11.0 Model Deployment
+## 10.0 Model Iteration: Ridge, Lasso, & Elastic Net Logistic Regression
+After confirming baseline Logistic Regression as the best model, regularized variants were tested to optimize performance and identify key predictive features.
+
+**Variants Evaluated:**
+- Logistic (Unregularized)
+- Logistic Ridge (L2)
+- Logistic Lasso (L1)
+- Logistic Elastic Net
+
+**Approach::**
+- Hyperparameter tuning (C, l1_ratio) via GridSearchCV with stratified 5-fold CV
+- Preprocessing via pipeline (scaling numeric, passing binary, one-hot encoding categorical)
+-Metrics: Accuracy, Precision, Recall, F1-score, ROC-AUC
+
+| Model                    | Accuracy | F1    | ROC_AUC |
+| ------------------------ | -------- | ----- | ------- |
+| Logistic (Unregularized) | 0.813    | 0.806 | 0.898   |
+| Logistic Ridge (L2)      | 0.813    | 0.806 | 0.898   |
+| Logistic Lasso (L1)      | 0.813    | 0.806 | 0.898   |
+| Logistic Elastic Net     | 0.813    | 0.806 | 0.898   |
+
+### Feature Importance:
+
+- Top drivers of delay: is_weekend_created, congestion_index, missing_docs_proxy, doc_amendments
+- shipment_mode_AIR reduces likelihood of delay
+- Horizontal bar plots visualize top 15 features; red = increases delay, green = reduces delay
+
+<img width="696" height="543" alt="image" src="https://github.com/user-attachments/assets/70298c9f-7401-4eb1-bf71-258ee759d02e" />
+
+
+## 11.0 Model Re-Evaluation Using Selected Features:
+
+Re-assess model performance using only the selected features identified by the Elastic Net logistic regression model.
+This ensures focus on the most influential predictors and tests whether tree-based models can benefit from reduced feature space.
+
+**Perfomance Using Selected Features**
+| Model         | Accuracy | Precision | Recall | F1    | ROC_AUC |
+| ------------- | -------- | --------- | ------ | ----- | ------- |
+| Decision Tree | 0.733    | 0.727     | 0.717  | 0.722 | 0.733   |
+| Random Forest | 0.799    | 0.802     | 0.777  | 0.789 | 0.878   |
+| XGBoost       | 0.788    | 0.789     | 0.767  | 0.778 | 0.871   |
+| LightGBM      | 0.797    | 0.801     | 0.773  | 0.787 | 0.888   |
+
+**Insights from Features:**
+
+- Operational Timing & Congestion: Weekend shipments and high congestion drive delays.
+- Shipment Mode: AIR reduces risk; SEA increases risk.
+- Documentation: Missing or amended documents increase likelihood of delay.
+- Commodities & HS Codes: Some commodities and codes slightly increase or reduce risk.
+
+## Conclusion:
+
+- The best-performing model is Elastic Net logistic regression, effectively combining L1 feature selection and L2 coefficient stability.
+- It outperforms tree-based models on this dataset while maintaining strong interpretability.
+- Model coefficients provide direct insights into critical risk factors, enabling informed operational decisions.
+
+**Operational Implications:**
+
+- Prioritize monitoring high-risk shipments, especially those on weekends or passing through congested points.
+- Ensure document completeness to minimize delays.
+- Use insights from the model to guide resource allocation and process improvements for smoother operations.
+
+**Business Value:**
+Logistic regression offers interpretability advantage, allowing direct insights into feature effects compared to black-box ensembles.
+
+## 12.0 Model Deployment
 
 - The final Random Forest model was deployed as a web-based application for real-time shipping delay prediction.
-Users input shipment details and receive immediate delay predictions using the same preprocessing pipeline applied during training, demonstrating a transition from model development to practical deployment.
+- Users input shipment details and receive immediate delay predictions using the same preprocessing pipeline applied during training, demonstrating a transition from model development to practical deployment.
 
 link: https://predictive-horticulture.streamlit.app/
 
-## 12.0 Key Insights 
-
-- Shipping delays are structurally driven, not random
-- Geographic and port-level factors dominate delay risk
-- Ensemble models outperform linear and single-tree approaches
-- SHAP provides transparent, defensible explanations for predictions
 
 ## Tools & Technologies
 
-- Python
-- Pandas, NumPy
-- Scikit-learn
-- SHAP
-- Matplotlib / Seaborn
-- Jupyter Notebook
+-Programming & Environment: Python, Jupyter Notebook
+- Data Manipulation: Pandas, NumPy
+- Machine Learning & Modeling: Scikit-learn, XGBoost, LightGBM
+- Preprocessing & Pipelines: Pipeline, ColumnTransformer, StandardScaler, OneHotEncoder
+- Model Evaluation & Metrics: GridSearchCV, StratifiedKFold, classification_report, confusion_matrix, accuracy, precision, recall, F1-score, ROC-AUC
+- Visualization: Matplotlib, Seaborn
 
-## Group members
+## Contributors
 - **David Munyiri* -Scrumaster
 - **Dennis Irimu*
 - **Lydiah Onkundi*
