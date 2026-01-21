@@ -60,7 +60,11 @@ def build_pipeline() -> Pipeline:
     )
 
     classifier = LogisticRegression(
-        max_iter=1000,
+        penalty="elasticnet",
+        solver="saga",
+        l1_ratio=0.5,
+        C=1.0,
+        max_iter=2000,
         class_weight="balanced",
         n_jobs=-1,
     )
@@ -85,7 +89,7 @@ def train(data_path: Path) -> dict:
 def main() -> None:
     # Parse CLI args, train the model, and persist it to disk.
     parser = argparse.ArgumentParser(
-        description="Train and pickle the baseline logistic regression pipeline."
+        description="Train and pickle the elastic-net logistic regression pipeline."
     )
     parser.add_argument(
         "--data-path",
