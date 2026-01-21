@@ -332,5 +332,17 @@ link: https://predictive-horticulture.streamlit.app/
 - **Cindy Achieng*
 - **Barclay Koin*
 
+## Local Deployment
+1. Train and pickle the baseline logistic regression model:
+
+```
+python train_logreg_model.py --data-path tlip_like_consignments_5000.jsonl --model-path models/log_reg_pipeline.pkl
+```
+
+2. Launch the Streamlit app:
+
+```
+streamlit run app.py
+```
 
 
